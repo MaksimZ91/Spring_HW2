@@ -1,25 +1,34 @@
 package com.example.demo.repositories;
 
+import com.example.demo.model.SQLProperties;
 import com.example.demo.model.User;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.RowSet;
-import java.sql.ResultSet;
 import java.util.List;
 
 @Repository
+@AllArgsConstructor
 public class UserRepository {
 
+    /**
+     * Объект коннектора к бд.
+     */
     private final JdbcTemplate jdbc;
 
-    public UserRepository(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
+    /**
+     * Объект с запросами к бд.
+     */
+    private final SQLProperties sqlProperties;
 
+    /**
+     * Получение всех пользователей.
+     * @return Список всех пользователей.
+     */
     public List<User> findAll() {
-        String sql = "SELECT * FROM userTable";
 
         RowMapper<User> userRowMapper = (r, i) -> {
             User rowObject = new User();
@@ -28,24 +37,36 @@ public class UserRepository {
             rowObject.setLastName(r.getString("lastName"));
             return rowObject;
         };
+        System.out.println(sqlProperties.getGetAll());
 
-        return jdbc.query(sql, userRowMapper);
+        return jdbc.query(sqlProperties.getGetAll(), userRowMapper);
     }
 
+    /**
+     * Сохранение пользователя в бд.
+     * @param user Объект сохраняемого пользователя.
+     * @return Сохраненный пользователь.
+     */
     public User save(User user) {
-        String sql = "INSERT INTO userTable VALUES (NULL, ?, ?)";
-        jdbc.update(sql, user.getFirstName(), user.getLastName());
+        jdbc.update(sqlProperties.getSave(), user.getFirstName(), user.getLastName());
         return user;
     }
 
+    /**
+     * Удаление пользователя из бд по ID.
+     * @param id Идентификатор пользователя.
+     */
     public void deleteById(int id) {
-        String sql = "DELETE FROM userTable WHERE id=?";
-        jdbc.update(sql, id);
+        jdbc.update(sqlProperties.getDeleteById(), id);
     }
 
+    /**
+     * Получение пользователя по ID
+     * @param id Идентификатор пользователя.
+     * @return Объект найденного пользователя.
+     */
     public User findOneById(int id) {
-        String sql = "SELECT * FROM userTable WHERE id=?";
-        return jdbc.queryForObject(sql,
+        return jdbc.queryForObject(sqlProperties.getFindOneById(),
                 (r, i) -> {
                     User user = new User();
                     user.setId(r.getInt("id"));
@@ -55,13 +76,14 @@ public class UserRepository {
                 }, id);
     }
 
-    public  User updateUser(User user){
-        String sql = "UPDATE userTable SET firstName=?, lastName=? WHERE id=?";
-        jdbc.update(sql, user.getFirstName(), user.getLastName(), user.getId());
+    /**
+     * Обновление пользователя
+     * @param user Объект обновляемого пользователя.
+     * @return обновленный пользователь.
+     */
+    public User updateUser(User user) {
+        jdbc.update(sqlProperties.getUpdateById(), user.getFirstName(), user.getLastName(), user.getId());
         return user;
     }
 
-
-    //public void deleteById(int id)
-    //"DELETE FROM userTable WHERE id=?"
 }
